@@ -2,3 +2,5 @@
 .asm-lsp.toml
 build/
 datasheets/
+compile_commands.json
+.cache/
