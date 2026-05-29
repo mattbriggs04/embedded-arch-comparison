@@ -28,3 +28,29 @@ A traditional preemptive RTOS architecture that abstracts away the superloop, al
 * **Architecture:** Isolated threads (`Task_MatrixScan`, `Task_OLED`, `Task_LED`, `Task_UART`).
 * **Core Challenge:** Thread safety and inter-process communication (IPC). Transitioning from volatile state flags to Mutexes, Semaphores, and RTOS Queues to safely share peripherals (like the OLED) across concurrent tasks.
 * **Objective:** Master task synchronization
+
+### Phase 3: Embassy Rust (Async/Await Cooperative)
+A modern, `no_std` Rust implementation utilizing the Embassy executor for cooperative multitasking, yielding the safety guarantees of the Rust compiler.
+* **Architecture:** Async tasks running on a cooperative executor, utilizing `.await` points to yield control during hardware delays (e.g., waiting for a DMA Transfer Complete interrupt).
+* **Core Challenge:** Satisfying the Rust borrow checker in an embedded environment. Safely sharing state and peripherals between async tasks using Embassy's `Channel` and `Signal` primitives.
+* **Objective:** Evaluate how zero-cost async abstractions compare to a preemptive RTOS in both developer ergonomics and runtime overhead, serving as a masterclass in modern systems programming.
+
+## Implementation Goals & Driver Specs
+
+Regardless of the paradigm, the system must achieve the following functional requirements:
+
+1. **WS2812b Driver (Timer PWM + DMA):** Generate a precise 800kHz ($1.25 \mu s$) waveform. The CPU must only compute the color data; the actual bit-banging must be offloaded to the DMA to ensure zero jitter.
+2. **Matrix Keypad Scanner:**
+   Implement non-blocking debounce logic and matrix scanning. A key press should trigger an action (e.g., change the LED animation or update the OLED).
+3. **OLED Display Interface (SPI + DMA):**
+   Render the current state of the macro-pad (e.g., active LED mode, last key pressed, UART status). Screen updates must happen asynchronously via DMA to avoid blocking the CPU.
+4. **PC Communication (UART + DMA):**
+   Receive configuration commands from the host PC (e.g., "Set LED color to red") and transmit status logs back, ensuring no bytes are dropped during heavy rendering tasks.
+5. **Hardware Interrupt (EXTI):**
+   The external button must immediately preempt the current execution context to cycle the active WS2812b color palette.
+
+## Success Criteria & Evaluation
+The project is considered complete when all three implementations are functionally identical. A final comparison will be documented, evaluating:
+* **Binary Size & Memory Footprint:** Flash and RAM usage across all three.
+* **Code Complexity & Readability:** Lines of code, modularity, and the mental overhead required to add a new feature.
+* **Concurrency Robustness:** How effectively each paradigm handles simultaneous events (e.g., mashing the keypad while receiving a UART burst and driving the LEDs).
