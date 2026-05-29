@@ -3,15 +3,31 @@
 ## Overview
 This project is an architectural exercise designed to implement the exact same embedded system—a Smart Macro-Pad—across three distinct software paradigms. By keeping the hardware and feature set constant, this project isolates and exposes the structural, mental, and performance trade-offs between baremetal C, a preemptive RTOS, and modern async Rust. 
 
-The goal is not just to make the hardware work, but to deeply analyze how different methodologies handle concurrency, resource sharing, and peripheral management on an ARM Cortex-M7.
+The goal is not just to make the hardware work, but to deeply analyze how different methodologies handle concurrency, resource sharing, and peripheral management on an ARM Cortex-M4F.
 
 ## Hardware Stack
-* **Microcontroller:** STM32 Nucleo F767ZI (ARM Cortex-M7)
+* **Microcontroller:** STM32 Nucleo F303K8 (STM32F303K8T6, ARM Cortex-M4F)
 * **Host Communication:** PC via UART + DMA
 * **Visual Output 1:** WS2812b LED Strip (driven via Timer PWM + DMA)
 * **Visual Output 2:** OLED Display (driven via SPI + DMA)
 * **Input 1:** 4x4 Matrix Keypad (GPIO matrix scanning)
 * **Input 2:** External Hardware Button (GPIO EXTI line)
+
+## Hardware Documentation
+
+Use these documents together when selecting pins and configuring peripherals:
+
+* **STM32F303K8 Datasheet:** [STM32F303x6/x8 datasheet](https://www.st.com/resource/en/datasheet/stm32f303k8.pdf)
+  * Pinout, electrical characteristics, package details, and alternate-function tables.
+  * For the Nucleo-F303K8, use the `STM32F303K8T6` / LQFP32 package information.
+* **STM32F303 Reference Manual:** [RM0316](https://www.st.com/resource/en/reference_manual/rm0316-stm32f303xbcde-stm32f303x68-stm32f328x8-stm32f358xc-stm32f398xe-advanced-armbased-mcus-stmicroelectronics.pdf)
+  * Peripheral and register behavior for RCC, GPIO, DMA, timers, ADC, USART, SPI, I2C, and other STM32F3 blocks.
+* **Nucleo-32 Board User Manual:** [UM1956](https://www.st.com/resource/en/user_manual/um1956-stm32-nucleo32-boards-mb1180-stmicroelectronics.pdf)
+  * Board layout, power options, ST-LINK details, and CN3/CN4 Arduino Nano connector pin assignments.
+* **Nucleo-F303K8 Product Page:** [NUCLEO-F303K8](https://www.st.com/en/evaluation-tools/nucleo-f303k8.html)
+  * Official board landing page with documentation and CAD resource downloads.
+* **Nucleo-32 Schematic Pack:** [nucleo-32pins_sch.zip](https://www.st.com/resource/en/schematic_pack/nucleo-32pins_sch.zip)
+  * Board schematics for checking solder bridges, ST-LINK routing, virtual COM port wiring, LEDs, reset, BOOT0, and exact net names.
 
 ## The Three Paradigms
 
@@ -21,7 +37,7 @@ This repository is split into three standalone projects, to be completed sequent
 A pure C implementation relying exclusively on the CMSIS headers, manually manipulating registers for the RCC, NVIC, and peripherals. 
 * **Architecture:** Non-blocking `while(1)` superloop heavily reliant on state machines.
 * **Core Challenge:** Managing concurrency without an OS. Polling the keypad or writing to the OLED must not block the CPU long enough to stall the WS2812b DMA buffer updates or drop incoming UART bytes.
-* **Objective:** Establish a profound baseline understanding of the STM32F7 memory map and interrupt vector table.
+* **Objective:** Establish a profound baseline understanding of the STM32F3 memory map and interrupt vector table.
 
 ### Phase 2: FreeRTOS in C (Preemptive Multitasking)
 A traditional preemptive RTOS architecture that abstracts away the superloop, allowing the scheduler to slice CPU time across dedicated tasks.

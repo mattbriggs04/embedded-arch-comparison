@@ -1,3 +1,4 @@
 .DS_Store
 .asm-lsp.toml
 build/
+datasheets/
