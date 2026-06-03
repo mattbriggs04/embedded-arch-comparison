@@ -1,7 +1,5 @@
 #include "stm32f303x8.h"
 
-#define BTN_PIN
-
 int main(void) {
 
     // Baremetal: superloop method
