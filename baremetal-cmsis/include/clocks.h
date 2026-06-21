@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define SYSCLK_FREQ 8000000UL // 8Mhz
+#define SYSCLK_FREQ 32000000UL // 32Mhz
 
 void init_clocks(void);
 

@@ -9,7 +9,7 @@ void init_systick(uint32_t ticks) {
     // 2. Clear current value
     // 3. Program control and status register
 
-    // reload value to generate 1ms ticks = 8000 (8MHz / (7999 + 1) = 1Khz)
+    // reload value to generate 1ms ticks = 8000 (8MHz / (7999 + 1) = 1Khz = 1ms)
     SysTick->LOAD = ticks - 1;
     SysTick->VAL = 0;
 

@@ -1,6 +1,8 @@
 #ifndef __SYSTICK_H__
 #define __SYSTICK_H__
 
-void init_systick();
+#include <stdint.h>
+
+void init_systick(uint32_t ticks);
 
 #endif // __SYSTICK_H__
