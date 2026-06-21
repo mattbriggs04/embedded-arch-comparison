@@ -8,6 +8,7 @@ int main(void) {
 
     // Setup
     init_clocks();
+    init_systick(SYSCLK_FREQ / 8000); // 8Mhz / 8000 = 1ms
     // init_uart();
     // init_spi(); // these will deal with enabling pin specific clocks and prescalers etc.
     // Baremetal: superloop method
