@@ -12,7 +12,7 @@ SIZE := arm-none-eabi-size
 
 # MCU and include Flags
 MCU_FLAGS := -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-AS_FLAGS := MCU_FLAGS
+ASFLAGS := $(MCU_FLAGS)
 DEFS := -DSTM32F303x8
 INCLUDES := -Iinclude -Ilib/cmsis_core -Ilib/cmsis_device
 
@@ -20,7 +20,7 @@ INCLUDES := -Iinclude -Ilib/cmsis_core -Ilib/cmsis_device
 CFLAGS := $(MCU_FLAGS) $(DEFS) $(INCLUDES) -std=c11 -Wall -Wextra -ffunction-sections -fdata-sections -MMD -MP
 
 # Map source to build objects
-C_SOURCES := src/main.c src/system_stm32f3xx.c
+C_SOURCES := src/main.c src/system_stm32f3xx.c src/clocks.c src/led.c src/spi.c src/systick.c src/uart.c
 ASM_SOURCES := startup/startup_stm32f303x8.s
 C_OBJS := $(C_SOURCES:%.c=$(BUILD_DIR)/%.o)
 ASM_OBJS := $(ASM_SOURCES:%.s=$(BUILD_DIR)/%.o)
