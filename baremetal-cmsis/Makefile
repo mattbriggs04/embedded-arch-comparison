@@ -1,4 +1,4 @@
-TARGET := baremetal-cmsis
+TARGET := baremetal-app
 
 # Define directories
 BUILD_DIR := build
@@ -51,6 +51,9 @@ $(BUILD_DIR)/%.o: %.s
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all clean
+flash: $(BUILD_DIR)/$(TARGET).elf
+	openocd -f interface/stlink.cfg -f target/stm32f3x.cfg -c "program build/$(TARGET).elf verify reset exit"
+
+.PHONY: all clean flash
 
 -include $(OBJS:.o=.d)
