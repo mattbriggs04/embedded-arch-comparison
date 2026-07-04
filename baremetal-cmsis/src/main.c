@@ -3,7 +3,7 @@
 #include "clocks.h"
 #include "uart.h"
 #include "led.h"
-// #include "spi.h"
+#include "oled.h"
 
 int main(void) {
 
@@ -12,6 +12,7 @@ int main(void) {
     init_systick(SYSCLK_FREQ / 1000); // gives 1ms
     init_uart();
     init_onboard_led();
+    init_oled();
     // init_spi(); // these will deal with enabling pin specific clocks and prescalers etc.
     // Baremetal: superloop method
     // since no RTOS or Async framework

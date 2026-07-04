@@ -8,19 +8,19 @@ void init_onboard_led() {
 
     // Set pin mode as a general purpose output
     // No AFR configuration needed since not in AF mode
-    GPIOB->MODER &= ~(0x3 << (LED3_PIN * 2));
-    GPIOB->MODER |= 0x1 << (LED3_PIN * 2);
+    LED3_PORT->MODER &= ~(0x3 << (LED3_PIN * 2));
+    LED3_PORT->MODER |= 0x1 << (LED3_PIN * 2);
 
     // Set output type do be push-pull as we drive it
-    GPIOB->OTYPER &= ~(0x1 << LED3_PIN);
+    LED3_PORT->OTYPER &= ~(0x1 << LED3_PIN);
 
     // Set speed to low
-    GPIOB->OSPEEDR &= ~(0x3 << (LED3_PIN * 2));
+    LED3_PORT->OSPEEDR &= ~(0x3 << (LED3_PIN * 2));
 }
 
 void write_onboard_led(bool state) {
-    if (state) { GPIOB->BSRR = 1 << LED3_PIN; }
-    else { GPIOB->BRR = 1 << LED3_PIN; }
+    if (state) { LED3_PORT->BSRR = 1 << LED3_PIN; }
+    else { LED3_PORT->BRR = 1 << LED3_PIN; }
 }
 
 void init_ws2812b() {
