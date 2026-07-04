@@ -2,19 +2,19 @@
 #include "oled.h"
 
 // CS   = PA4 (GPIO toggled manually)
-// MOSI = PA7
-// MISO = PA6
 // SCK  = PA5
+// MISO = PA6
+// MOSI = PA7
 void init_oled() {
-    // Enable clock corresponding to GPIO A, SPI peripheral, and DMA
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_DMA1EN;
+    // Enable clock corresponding to GPIO A and SPI peripheral
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
     // Configure CS (PA4)
     // Set mode to General Purpose Output (01)
     GPIOA->MODER &= ~(0x3 << (4*2));
     GPIOA->MODER |= (0x1 << (4*2));
-    GPIOA->OTYPER &= (0x1 << 4); // push-pull
+    GPIOA->OTYPER &= ~(0x1 << 4); // push-pull
     GPIOA->OSPEEDR |= (0x3 << (4*2));
     GPIOA->BSRR = (1 << 4); // drive high
 
@@ -26,18 +26,11 @@ void init_oled() {
     GPIOA->AFR[0] &= ~((0xf << (5 * 4)) | (0xf << (6 * 4)) | (0xf << (7 * 4)));
     GPIOA->AFR[0] |= ((0x5 << (5 * 4)) | (0x5 << (6 * 4)) | (0x5 << (7 * 4)));
 
-    // Configure DMA channel 3
-    DMA1_Channel3->CCR = 0; // clear configuration register
-    DMA1_Channel3->CPAR = (volatile uint32_t)&SPI1->DR; // peripheral address
-    DMA1_Channel3->CCR |= DMA_CCR_MINC; // auto-increment buffer pointer
-    DMA1_Channel3->CCR |= DMA_CCR_DIR;  // read from memory (TX to peripheral)
-    DMA1_Channel3->CCR |= DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0; // Mem size = peripheral size = 16-bit
-
     // Configure SPI
     SPI1->CR1 = 0; // clear reg
     SPI1->CR1 |= SPI_CR1_SSM; // enable slave-select via software
     SPI1->CR1 |= SPI_CR1_SSI; // slave-select internal (sets NSS high) so it doesn't fault
-    SPI1->CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1; // f_pclk / 16 = ??
+    SPI1->CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1; // f_pclk / 16
     SPI1->CR1 |= SPI_CR1_MSTR; // enable MCU as master
 
     SPI1->CR2 = 0; // clear reg
@@ -46,22 +39,64 @@ void init_oled() {
     SPI1->CR2 |= SPI_CR2_DS_0 | SPI_CR2_DS_3;
     SPI1->CR2 &= ~(SPI_CR2_DS_1 | SPI_CR2_DS_2);
 
-    SPI1->CR2 |= SPI_CR2_TXDMAEN; // enable DMA transmit
-
-
     SPI1->CR1 |= SPI_CR1_SPE; // enable SPI
 }
 
-// row = whether to send to row 0 or row 1 of the oled
+// Send a single command to the OLED
 void oled_send_cmd(uint32_t cmd) {
+    // For a command: RS = 0 (bit 9), R/W = 0 (bit 8)[cite: 1]
+    // Masking with 0xFF guarantees the top bits are 0
+    uint16_t tx_data = cmd & 0xFF;
 
+    // Pull CS LOW to select the device
+    GPIOA->BRR = (1 << 4);
+
+    // Wait until the Transmit Buffer Empty (TXE) flag is set
+    while (!(SPI1->SR & SPI_SR_TXE));
+
+    // Write to Data Register
+    SPI1->DR = tx_data;
+
+    // Wait for the SPI peripheral
+    while (SPI1->SR & SPI_SR_BSY);
+
+    // Pull CS HIGH to deselect the device
+    GPIOA->BSRR = (1 << 4);
 }
 
+// Send a string of characters to a specific row
 void oled_send_str(const char *str, uint8_t len, uint8_t row) {
     // truncate string if it is too long
     if (len > OLED_MAX_CHARS_PER_LINE) {
         len = OLED_MAX_CHARS_PER_LINE;
     }
 
+    // Move the cursor to the correct row in DDRAM
+    // Row 0 begins at address 0x00
+    // Row 1 begins at address 0x40
+    uint8_t address = (row == 0) ? 0x00 : 0x40;
 
+    // The "Set DDRAM address" command requires DB7 to be 1 (0x80)[cite: 1]
+    oled_send_cmd(0x80 | address);
+
+    // Pull CS LOW to begin the data burst
+    GPIOA->BRR = (1 << 4);
+
+    // Loop through the string and blast characters into the FIFO
+    for (int i = 0; i < len; i++) {
+        // For data: RS = 1 (bit 9), R/W = 0 (bit 8)[cite: 1]
+        uint16_t tx_data = (1 << 9) | str[i];
+
+        // Wait until the TX FIFO has room for at least one more frame
+        while (!(SPI1->SR & SPI_SR_TXE));
+
+        // Write the packed character to the Data Register
+        SPI1->DR = tx_data;
+    }
+
+    // Wait for the very last character to finish transmitting
+    while (SPI1->SR & SPI_SR_BSY);
+
+    // Pull CS HIGH
+    GPIOA->BSRR = (1 << 4);
 }
