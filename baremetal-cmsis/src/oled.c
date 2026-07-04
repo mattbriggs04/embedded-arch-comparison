@@ -44,7 +44,7 @@ void init_oled() {
 
 // Send a single command to the OLED
 void oled_send_cmd(uint32_t cmd) {
-    // For a command: RS = 0 (bit 9), R/W = 0 (bit 8)[cite: 1]
+    // For a command: RS = 0 (bit 9), R/W = 0 (bit 8)
     // Masking with 0xFF guarantees the top bits are 0
     uint16_t tx_data = cmd & 0xFF;
 
@@ -76,7 +76,7 @@ void oled_send_str(const char *str, uint8_t len, uint8_t row) {
     // Row 1 begins at address 0x40
     uint8_t address = (row == 0) ? 0x00 : 0x40;
 
-    // The "Set DDRAM address" command requires DB7 to be 1 (0x80)[cite: 1]
+    // The "Set DDRAM address" command requires DB7 to be 1 (0x80)
     oled_send_cmd(0x80 | address);
 
     // Pull CS LOW to begin the data burst
@@ -84,7 +84,7 @@ void oled_send_str(const char *str, uint8_t len, uint8_t row) {
 
     // Loop through the string and blast characters into the FIFO
     for (int i = 0; i < len; i++) {
-        // For data: RS = 1 (bit 9), R/W = 0 (bit 8)[cite: 1]
+        // For data: RS = 1 (bit 9), R/W = 0 (bit 8)
         uint16_t tx_data = (1 << 9) | str[i];
 
         // Wait until the TX FIFO has room for at least one more frame
